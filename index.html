@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Which One Should You Eat?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --navy: #0B2545;
+  --teal: #13A89E;
+  --sand: #F2E8CF;
+  --coral: #EF6F51;
+  --amber: #E9A23B;
+  --bg: #F2E8CF;
+  --surface: #FFFFFF;
+  --ink: #0B2545;
+  --muted: #4A5D75;
+  --line: #D8CBA8;
+  --good: #0F8A81;
+  --bad: #C9472A;
+  --shadow: 0 2px 0 rgba(11,37,69,.12);
+  --right-bg: #E3F5F3;
+  --wrong-bg: #FDE6E0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0A1A30;
+    --surface: #13294A;
+    --ink: #F2E8CF;
+    --muted: #B6C2D3;
+    --line: #2A4569;
+    --good: #3CCFC3;
+    --bad: #FF8A6E;
+    --shadow: 0 2px 0 rgba(0,0,0,.35);
+    --right-bg: #123F48;
+    --wrong-bg: #4A2230;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0A1A30; --surface: #13294A; --ink: #F2E8CF; --muted: #B6C2D3;
+  --line: #2A4569; --good: #3CCFC3; --bad: #FF8A6E; --shadow: 0 2px 0 rgba(0,0,0,.35);
+  --right-bg: #123F48; --wrong-bg: #4A2230;
+}
+* { box-sizing: border-box; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Atkinson Hyperlegible", "Segoe UI", Verdana, Arial, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  background: var(--navy);
+  color: #F2E8CF;
+  padding: 1.25rem 1.25rem 1.4rem;
+}
+header .wrap { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+header h1 { margin: 0; font-size: clamp(1.6rem, 4.5vw, 2.4rem); line-height: 1.1; letter-spacing: -0.01em; }
+header p { margin: .35rem 0 0; color: #BFD6E0; }
+.progress { display: flex; gap: .4rem; }
+.progress span {
+  width: 2.2rem; height: .5rem; border-radius: 4px; background: #2A4569;
+}
+.progress span.done { background: var(--teal); }
+.progress span.now { background: #F2E8CF; }
+.wrap { max-width: 760px; margin: 0 auto; }
+main { padding: 1.5rem 1.25rem 3rem; }
+h2 { font-size: 1.5rem; margin: 0 0 .4rem; }
+.lede { color: var(--muted); margin: 0 0 1.25rem; max-width: 62ch; }
+button {
+  font: inherit; font-weight: 700; cursor: pointer;
+  border: 0; border-radius: 10px; padding: .85rem 1.4rem;
+  background: var(--navy); color: #F2E8CF;
+}
+button.primary { background: var(--teal); color: #fff; }
+button:focus-visible, .card:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; }
+button:disabled { opacity: .5; cursor: default; }
+
+/* The ranking gauge: the memorable element */
+.board { display: grid; grid-template-columns: 3.2rem 1fr; gap: .9rem; margin-bottom: 1.25rem; }
+.gauge {
+  border-radius: 999px;
+  background: linear-gradient(to bottom, var(--teal) 0%, var(--teal) 18%, var(--amber) 50%, var(--coral) 82%, var(--coral) 100%);
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  padding: 1rem 0; color: #fff; font-weight: 700; font-size: .8rem; line-height: 1.15;
+}
+.gauge span { writing-mode: vertical-rl; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; }
+.card {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: .85rem .9rem .85rem .6rem;
+  display: grid; grid-template-columns: 2.2rem 1fr auto; align-items: center; gap: .6rem;
+  box-shadow: var(--shadow);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  cursor: grab; position: relative;
+}
+.card.dragging { cursor: grabbing; z-index: 5; box-shadow: 0 10px 24px rgba(11,37,69,.28); border-color: var(--teal); }
+.card .pos {
+  width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700;
+  background: var(--bg); color: var(--ink); border: 2px solid var(--line);
+}
+.card .name { font-weight: 700; font-size: 1.1rem; line-height: 1.25; }
+.card .how { color: var(--muted); font-size: .92rem; }
+.arrows { display: flex; flex-direction: column; gap: .25rem; }
+.arrows button { padding: .2rem .55rem; border-radius: 6px; background: transparent; color: var(--muted); border: 1.5px solid var(--line); font-size: .9rem; line-height: 1.2; }
+.card.locked { cursor: default; }
+.card.right { border-color: var(--good); border-width: 3px; background: var(--right-bg); }
+.card.right .pos { background: var(--good); border-color: var(--good); color: #fff; }
+.card.wrong { border-color: var(--bad); border-width: 3px; background: var(--wrong-bg); }
+.card.wrong .pos { background: var(--bad); border-color: var(--bad); color: #fff; }
+.card .why { grid-column: 2 / 4; font-size: .95rem; margin-top: .35rem; padding-top: .5rem; border-top: 1px dashed var(--line); }
+.tag { display: inline-block; font-size: .8rem; font-weight: 700; border-radius: 6px; padding: .05rem .45rem; margin-right: .35rem; color: #fff; }
+.tag.g { background: #0F8A81; } .tag.a { background: #B7741A; } .tag.r { background: #C9472A; }
+.verdict { font-weight: 700; margin-right: .3rem; }
+.verdict.ok { color: var(--good); } .verdict.no { color: var(--bad); }
+.actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.score-line { font-weight: 700; }
+.hint { color: var(--muted); font-size: .92rem; margin: 0 0 1rem; }
+
+/* Final screen */
+.final-score { font-size: 1.15rem; margin: 0 0 1.5rem; }
+.groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.group { border-radius: 14px; overflow: hidden; background: var(--surface); border: 2px solid var(--line); }
+.group h3 { margin: 0; padding: .8rem .9rem; color: #fff; font-size: 1.1rem; line-height: 1.2; }
+.group h3 small { display: block; font-weight: 400; font-size: .85rem; opacity: .92; margin-top: .2rem; }
+.group.g h3 { background: #0F8A81; } .group.a h3 { background: #B7741A; } .group.r h3 { background: #C9472A; }
+.group ul { list-style: none; margin: 0; padding: .4rem .9rem .8rem; }
+.group li { padding: .5rem 0; border-bottom: 1px solid var(--line); font-weight: 700; }
+.group li:last-child { border-bottom: 0; }
+.group li span { display: block; font-weight: 400; font-size: .88rem; color: var(--muted); }
+.note { font-size: .88rem; color: var(--muted); max-width: 64ch; }
+.intro-points { padding-left: 1.2rem; margin: 0 0 1.5rem; }
+.intro-points li { margin-bottom: .35rem; }
+
+@media (max-width: 680px) {
+  .groups { grid-template-columns: 1fr; }
+  .board { grid-template-columns: 2.4rem 1fr; gap: .6rem; }
+  .gauge { font-size: .7rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: border-color .2s; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Which one should you eat?</h1>
+      <p>Sustainable seafood in Australia</p>
+    </div>
+    <div class="progress" id="progress" aria-label="Progress"></div>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+
+<script>
+// cat: g = sustainable choice, a = eat less, r = in serious trouble
+const ROUNDS = [
+  [
+    { name: "Farmed blue mussels", how: "Farmed on ropes", cat: "g",
+      why: "Mussels filter their food from the water, so they need no fish feed and can even help clean the water. Very low impact." },
+    { name: "WA rock lobster", how: "Lobster traps", cat: "g",
+      why: "Caught in pots with escape gaps and very low bycatch. The world's first fishery certified sustainable by the MSC." },
+    { name: "Wild-caught barramundi", how: "Estuary gillnets", cat: "a",
+      why: "Gillnets can trap and drown turtles, dugongs and dolphins. Gillnets are being removed from the Great Barrier Reef by 2027." },
+    { name: "Orange roughy", how: "Deep-sea bottom trawling", cat: "r",
+      why: "Can live over 100 years and breeds very late, so it was badly overfished in the 1990s and is only slowly recovering. Trawling also damages deep-sea habitats." }
+  ],
+  [
+    { name: "Australian sardines", how: "Purse seine nets", cat: "g",
+      why: "Fast-growing, plentiful fish caught with little bycatch. The South Australian sardine fishery is certified sustainable." },
+    { name: "Swordfish", how: "Pelagic longlining", cat: "a",
+      why: "Longlines can hook sharks, seabirds and sea turtles. Stocks are not overfished, but the bycatch is a concern." },
+    { name: "Snapper", how: "Line and net fishing", cat: "a",
+      why: "Several Australian snapper stocks have been depleted, and some areas were closed to fishing so they could recover." },
+    { name: "School shark (sold as flake)", how: "Gillnets and longlines", cat: "r",
+      why: "School shark was heavily overfished and is listed as conservation dependent. Sharks grow slowly and have few young, so they recover very slowly." }
+  ],
+  [
+    { name: "Spencer Gulf king prawns", how: "Prawn trawling", cat: "g",
+      why: "Bycatch reduction devices, short seasons and closures keep this fishery healthy. It is certified sustainable by the MSC." },
+    { name: "Southern bluefin tuna", how: "Purse seine and longline", cat: "a",
+      why: "Once fished down to about 5% of its original size, it is now rebuilding (about 23% in 2023). Recovering, but still well below a healthy level." },
+    { name: "Eastern gemfish", how: "Bottom trawling", cat: "r",
+      why: "Eastern gemfish collapsed from overfishing and is listed as conservation dependent. Commercial fishers cannot target it." },
+    { name: "Tasmanian farmed Atlantic salmon", how: "Sea-pen farming", cat: "r",
+      why: "Rated 'Say no' by the AMCS GoodFish guide because of pollution, wild fish used in feed, and risks to the endangered Maugean skate in Macquarie Harbour." }
+  ]
+];
+const CAT = {
+  g: { label: "Sustainable choice", short: "Sustainable", sub: "Enjoy these" },
+  a: { label: "Try to eat less", short: "Eat less", sub: "Have occasionally" },
+  r: { label: "In serious trouble", short: "Serious trouble", sub: "Best avoided" }
+};
+const ORDER = { g: 0, a: 1, r: 2 };
+
+let round = 0, totalScore = 0, attempts = 0, current = [], checked = false;
+const app = document.getElementById("app");
+const progress = document.getElementById("progress");
+
+function renderProgress() {
+  progress.innerHTML = [0,1,2].map(i => `<span class="${i < round ? "done" : (i === round && round < 3 ? "now" : "")}"></span>`).join("");
+  if (round >= 3) progress.querySelectorAll("span").forEach(s => s.className = "done");
+}
+function shuffle(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+  // avoid starting already in a correct order
+  if (isCorrectOrder(b)) return shuffle(a);
+  return b;
+}
+function isCorrectOrder(arr) {
+  for (let i = 1; i < arr.length; i++) if (ORDER[arr[i].cat] < ORDER[arr[i-1].cat]) return false;
+  return true;
+}
+// A card is correct if its position sits within the range its category should occupy
+function correctPositions(items) {
+  const sorted = items.slice().sort((x, y) => ORDER[x.cat] - ORDER[y.cat]);
+  const range = {};
+  sorted.forEach((it, i) => { range[it.cat] = range[it.cat] || [i, i]; range[it.cat][1] = i; });
+  return range;
+}
+
+function intro() {
+  round = 0; totalScore = 0;
+  renderProgress();
+  app.innerHTML = `
+    <h2>Your mission</h2>
+    <p class="lede">Every time you buy seafood, you are choosing a fishing method. Some methods are kind to the ocean. Others catch too many animals by accident or take fish faster than they can breed.</p>
+    <ul class="intro-points">
+      <li>There are <strong>3 rounds</strong>, with <strong>4 seafood species</strong> in each.</li>
+      <li>Drag the species into order, from <strong>most sustainable</strong> at the top to <strong>least sustainable</strong> at the bottom.</li>
+      <li>You can also use the arrow buttons to move a species up or down.</li>
+      <li>Think about what you learned: bycatch, fishing methods and whether stocks are healthy.</li>
+    </ul>
+    <button class="primary" id="start">Start round 1</button>`;
+  document.getElementById("start").onclick = startRound;
+}
+
+function startRound() {
+  checked = false; attempts = 0;
+  current = shuffle(ROUNDS[round]);
+  renderProgress();
+  app.innerHTML = `
+    <h2>Round ${round + 1} of 3</h2>
+    <p class="hint">Drag the cards (or use the arrows) so the most sustainable choice is at the top.</p>
+    <div class="board">
+      <div class="gauge" aria-hidden="true"><span>Most sustainable</span><span>Least sustainable</span></div>
+      <ol class="list" id="list" aria-label="Seafood species to rank"></ol>
+    </div>
+    <div class="actions" id="actions">
+      <button class="primary" id="check">Check my order</button>
+    </div>`;
+  renderCards();
+  document.getElementById("check").onclick = checkOrder;
+}
+
+function renderCards() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  current.forEach((it, i) => {
+    const li = document.createElement("li");
+    li.className = "card";
+    li.tabIndex = 0;
+    li.dataset.name = it.name;
+    li.innerHTML = `
+      <span class="pos">${i + 1}</span>
+      <div><div class="name">${it.name}</div><div class="how">${it.how}</div></div>
+      <div class="arrows">
+        <button type="button" aria-label="Move ${it.name} up" data-dir="-1">▲</button>
+        <button type="button" aria-label="Move ${it.name} down" data-dir="1">▼</button>
+      </div>`;
+    li.querySelectorAll(".arrows button").forEach(b => {
+      b.addEventListener("pointerdown", e => e.stopPropagation());
+      b.onclick = () => move(it.name, +b.dataset.dir);
+    });
+    li.addEventListener("keydown", e => {
+      if (checked) return;
+      if (e.key === "ArrowUp") { e.preventDefault(); move(it.name, -1, true); }
+      if (e.key === "ArrowDown") { e.preventDefault(); move(it.name, 1, true); }
+    });
+    attachDrag(li);
+    list.appendChild(li);
+  });
+}
+
+function move(name, dir, keepFocus) {
+  if (checked) return;
+  const i = current.findIndex(x => x.name === name), j = i + dir;
+  if (j < 0 || j >= current.length) return;
+  [current[i], current[j]] = [current[j], current[i]];
+  renderCards();
+  if (keepFocus) document.querySelector(`.card[data-name="${CSS.escape(name)}"]`).focus();
+}
+
+function syncFromDom() {
+  const names = [...document.querySelectorAll("#list .card")].map(c => c.dataset.name);
+  current = names.map(n => current.find(x => x.name === n));
+  document.querySelectorAll("#list .card .pos").forEach((p, i) => p.textContent = i + 1);
+}
+
+function attachDrag(card) {
+  let dragging = false, grab = 0, tY = 0;
+  const apply = e => {
+    const layoutTop = card.getBoundingClientRect().top - tY;
+    tY = (e.clientY - grab) - layoutTop;
+    card.style.transform = `translateY(${tY}px)`;
+  };
+  card.addEventListener("pointerdown", e => {
+    if (checked || e.button > 0) return;
+    dragging = true; tY = 0; clearMarks();
+    grab = e.clientY - card.getBoundingClientRect().top;
+    card.setPointerCapture(e.pointerId);
+    card.classList.add("dragging");
+  });
+  card.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    apply(e);
+    const mid = e.clientY - grab + card.offsetHeight / 2;
+    const next = card.nextElementSibling, prev = card.previousElementSibling;
+    const centre = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+    if (next && mid > centre(next)) { card.parentNode.insertBefore(next, card); apply(e); syncFromDom(); }
+    else if (prev && mid < centre(prev)) { card.parentNode.insertBefore(card, prev); apply(e); syncFromDom(); }
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false; tY = 0;
+    card.classList.remove("dragging");
+    card.style.transform = "";
+    syncFromDom();
+  };
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", end);
+}
+
+function clearMarks() {
+  document.querySelectorAll("#list .card").forEach(c => c.classList.remove("right", "wrong"));
+}
+
+function checkOrder() {
+  attempts++;
+  const range = correctPositions(current);
+  const cards = [...document.querySelectorAll("#list .card")];
+  let score = 0;
+  const oks = current.map((it, i) => {
+    const ok = i >= range[it.cat][0] && i <= range[it.cat][1];
+    if (ok) score++;
+    cards[i].classList.remove("right", "wrong");
+    cards[i].classList.add(ok ? "right" : "wrong");
+    return ok;
+  });
+  if (attempts === 1) totalScore += score;
+  const actions = document.getElementById("actions");
+
+  if (score < 4) {
+    actions.innerHTML = `
+      <button class="primary" id="check">Check again</button>
+      <span class="score-line" role="status">${score} of 4 in the right spot. Move the red cards and check again.</span>`;
+    document.getElementById("check").onclick = checkOrder;
+    return;
+  }
+
+  checked = true;
+  current.forEach((it, i) => {
+    const card = cards[i];
+    card.classList.add("locked");
+    const arrows = card.querySelector(".arrows");
+    if (arrows) arrows.remove();
+    const why = document.createElement("div");
+    why.className = "why";
+    why.innerHTML = `<span class="tag ${it.cat}">${CAT[it.cat].label}</span>${it.why}`;
+    card.appendChild(why);
+  });
+  const sameCat = Object.values(range).some(([a, b]) => b > a);
+  actions.innerHTML = `
+    <span class="score-line" role="status">${attempts === 1 ? "All correct on your first try!" : "All correct! You got there in " + attempts + " checks."}</span>
+    <button class="primary" id="next">${round < 2 ? "Go to round " + (round + 2) : "See the results"}</button>`;
+  if (sameCat) {
+    const p = document.createElement("p");
+    p.className = "hint"; p.style.flexBasis = "100%"; p.style.margin = ".25rem 0 0";
+    p.textContent = "Two species in this round share the same rating, so either order between them counts as correct.";
+    actions.appendChild(p);
+  }
+  document.getElementById("next").onclick = () => { round++; round < 3 ? startRound() : finish(); };
+  document.getElementById("next").focus();
+}
+
+function finish() {
+  round = 3;
+  renderProgress();
+  const all = ROUNDS.flat();
+  const group = c => all.filter(x => x.cat === c).map(x => `<li>${x.name}<span>${x.how}</span></li>`).join("");
+  app.innerHTML = `
+    <h2>Your seafood guide</h2>
+    <p class="final-score">On your first try in each round, you placed <strong>${totalScore} out of 12</strong> species in the right spot.</p>
+    <div class="groups">
+      ${["g","a","r"].map(c => `<section class="group ${c}"><h3>${CAT[c].label}<small>${CAT[c].sub}</small></h3><ul>${group(c)}</ul></section>`).join("")}
+    </div>
+    <p class="note">Ratings are based on Australian sustainable seafood guides (such as the AMCS GoodFish guide) and government fishery status reports. Ratings change as fish stocks and fishing methods change, so check a current guide before you buy.</p>
+    <div class="actions"><button class="primary" id="again">Play again</button></div>`;
+  document.getElementById("again").onclick = intro;
+}
+
+intro();
+</script>
+</body>
+</html>
